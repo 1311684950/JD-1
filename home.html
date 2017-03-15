@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html ng-app="myapp">
+<head>
+    <meta charset="UTF-8">
+    <title>web站点入口页面</title>
+    <link rel="stylesheet" href="css/bootstrap.css"/>
+    <link rel="stylesheet" href="css/font-awesome.css"/>
+
+    <link rel="stylesheet" href="css/style.css"/>
+    <link rel="stylesheet" href="css/home.css"/>
+    <link href="css/details.css" rel="stylesheet" type="text/css" />
+
+    <script src="js/jquery-3.1.0.js"></script>
+    <script src="js/jq.js"></script>
+
+    <script src="js/angular.js"></script>
+    <script src="js/angular-route.js"></script>
+    <style>
+    </style>
+    <script>
+
+        // 创建主模块，并添加对路由模块的依赖
+        var myapp = angular.module("myapp", ["ngRoute"])
+                .config(function ($routeProvider) {
+                    $routeProvider
+                    // 处理默认首页
+                            .when("/", {templateUrl: "pages/productList.html", controller: "productsCtrl"})
+                            .when("/productList", {templateUrl: "pages/productList.html", controller: "productsCtrl"})
+                            .when("/detail", {templateUrl: "pages/detail.html", controller: "detailCtrl"})
+                            .when("/detail?:name", {templateUrl: "pages/detail.html", controller: "detailCtrl"})
+                            .when("/shopCart", {templateUrl: "pages/shopCart.html", controller: "cartCtrl"})
+                            // 如果请求的路由不存在
+                            .otherwise({templateUrl: "pages/productList.html", controller: "productsCtrl"});
+                })
+                // 创建一个代表购物车的service
+                .factory("cartService", function () {
+                    // 容器：相当于购物车的购物筐
+                    var cart = [];
+
+                    return {
+                        // 添加商品到购物车:商品对象{name:"方便面",price:8.00}
+                        // 需要判断购物车的数组中，之前是否已经加入过该商品
+                        // 如果之前已经加入过，则只需要修改购买数量
+                        add: function (product) {
+                            // 遍历数组，判断数组中是否有product
+                            // item:{product:product,number:3}
+                            for (var i = 0; i < cart.length; i++) {
+                                var item = cart[i];
+                                if (product.name == item.product.name) {
+                                    // 说明之前添加过，这里只修改购买数量
+                                    item.number++;
+                                    return;
+                                }
+                            }
+
+                            // 如果能执行到这里，说明在购物车中没有找到该商品-新商品
+                            cart.push({product: product, number: 1});
+                        },
+                        // 从购物车中删除商品的方法
+                        remove:function(name){
+                            for (var i=0;i<cart.length;i++){
+                                var item=cart[i];
+                                if (name==item.product.name){
+                                    item.number--;
+                                    if(item.number==0){
+                                        cart.splice(i,1)
+                                    }
+                                    return;
+                                }
+                            }
+                        },
+                        // 查询购物车中所有商品的方法
+                        findAll: function () {
+                            return cart;
+                        },
+                        // 清空购物车
+                        clear: function () {
+                            cart.length = 0;
+                        }
+                    };
+                })
+                // step2: 向主模块注册一个控制器
+                // 依赖注入: $http service，以及购物车service
+                .controller("productsCtrl", function ($scope, $http, cartService) {
+                    var url = "products.json";
+                    $http.get(url).success(function (data) {
+                        $scope.products = data;
+                    });
+
+                    // 购买商品按钮事件
+                    $scope.add = function (product) {
+                        // 将商品对象加入到购物车中
+                        cartService.add(product);
+                    };
+                    $scope.range={minPrice:0,maxPrice:9999}
+
+                })
+                .filter("filterPrice",function(){
+
+                    return function (products,minPrice,maxPrice){
+                        if(!angular.isArray(products)||!angular.isNumber(minPrice)||!angular.isNumber(maxPrice)){
+                            return products;
+                        }
+                        var newArr=[];
+                        angular.forEach(products,function(p){
+                            if (p.price>minPrice&&p.price<maxPrice){
+                                newArr.push(p);
+                            }
+                        });
+                        return newArr
+                    }
+                })
+
+                .controller("detailCtrl", function ($scope,$routeParams,cartService) {
+                    var name = $routeParams["name"] || "Apple";
+//                    console.log("name:" + name);
+                    var productList = {
+                        Apple:{"name":"Apple","price":1999,"os":"已有3600+人评价","quantity":2,"imgsrc":"pic1.jpg"},
+                        宏碁:{"name":"宏碁","price":3999,"os":"已有8.5万+人评价","quantity":1,"imgsrc":"pic2.jpg"},
+                        联想:{"name":"联想","price":4999,"os":"已有1500+人评价","quantity":1,"imgsrc":"pic3.jpg"},
+                        华硕:{"name":"华硕","price":999,"os":"已有3.3万+人评价","quantity":3,"imgsrc":"pic4.jpg"},
+                        小米:{"name":"小米","price":2999,"os":"已有3.8万+人评价","quantity":2,"imgsrc":"pic5.jpg"}
+                    };
+
+
+                    $scope.product = productList[name];
+//                    console.log($scope.product.name + "," + $scope.product.price)
+
+                    // 购买商品按钮事件
+                    $scope.add = function () {
+                        // 将商品对象加入到购物车中
+                        cartService.add($scope.product);
+                    };
+                })
+                // 依赖注入单例的购物车对象
+                .controller("cartCtrl", function ($scope, cartService) {
+                    // 拿到购物筐中的所有商品
+                    $scope.cart = cartService.findAll();
+
+                    // 删除购物车中商品的方法
+                    $scope.remove = function (name) {
+                        cartService.remove(name);
+                    };
+
+                    // 统计购买总数量
+                    $scope.count = function () {
+                        var total = 0;
+                        angular.forEach($scope.cart, function (item) {
+                            total += item.number;
+                        });
+                        return total;
+                    };
+
+                    // 计算购买总金额
+                    $scope.money = function () {
+                        var total = 0;
+                        angular.forEach($scope.cart, function (item) {
+                            total += item.number * item.product.price;
+                        });
+                        return total;
+                    };
+                });
+    </script>
+</head>
+<body>
+<div class="header" id="top">
+    <div class="top">
+        <div class="inner">
+            <div class="dizhi">送至:
+                <select>
+                    <option value="上海">上海</option>
+                    <option value="北京">北京</option>
+                    <option value="广东">广东</option>
+                    <option value="四川">四川</option>
+                    <option value="云南">云南</option>
+                    <option value="南京">南京</option>
+                </select>
+                <button type="button" id="btn">选择城市</button>
+                <div id="wendu">35°C</div>
+                <div id="tubiao"><img src="images/day_1.png"></div>
+            </div>
+            <ul>
+                <li><a href="javascript:;" class="h_one">你好，请登录</a><a href="javascript:;" class="h_two">免费注册</a></li>
+                <li class="line"></li>
+                <li><a href="javascript:;">我的订单</a></li>
+                <li class="line"></li>
+                <li class="active_bg active"><a href="javascript:;">我的京东<i>◇</i></a></li>
+                <li class="line"></li>
+                <li><a href="javascript:;">京东会员</a></li>
+                <li class="line"></li>
+                <li><a href="javascript:;">企业采购</a></li>
+                <li class="line"></li>
+                <li class="active_bg active"><a href="javascript:;"><span></span>手机京东<i>◇</i></a></li>
+                <li class="line"></li>
+                <li class="active_bg"><a href="javascript:;">关注京东<i>◇</i></a></li>
+                <li class="line"></li>
+                <li class="active_bg"><a href="javascript:;">客户服务<i>◇</i></a></li>
+                <li class="line"></li>
+                <li class="active_bg"><a href="javascript:;">网站导航<i>◇</i></a></li>
+            </ul>
+        </div>
+    </div>
+    <div class="mid clearfix">
+        <div class="logo"><a href="https://www.jd.com/"><img src="images/logo-201305.png"></a></div>
+        <div class="search">
+            <form>
+                <input type="text" value="二合一平板" class="text"><input type="submit" value="搜索" class="sbumit">
+            </form>
+            <div class="tags">
+                <a href="javascript:;" class="active">相机节</a>
+                <a href="javascript:;">京东E卡</a>
+                <a href="javascript:;">多肉萌宠</a>
+                <a href="javascript:;">耐克5折</a>
+                <a href="javascript:;">每150减50</a>
+                <a href="javascript:;">自行车灯</a>
+                <a href="javascript:;">康比特</a>
+                <a href="javascript:;">1元专享</a>
+                <a href="javascript:;">男外套</a>
+            </div>
+        </div>
+        <div class="my_cart" ng-controller="cartCtrl">
+
+            <a href="#/shopCart">我的购物车</a>
+            <i></i>
+            <div class="number">{{count()}}</div>
+            <div class="buy">
+                <a href="#/productList">浏览商品</a>
+                <i>></i>
+            </div>
+        </div>
+    </div>
+    <div class="bot clearfix">
+        <div class="titel">全部商品分类</div>
+        <ul>
+            <li><a href="javascript:;">服装城</a></li>
+            <li><a href="javascript:;">美妆馆</a></li>
+            <li><a href="javascript:;">京东超市</a></li>
+            <li><a href="javascript:;">生鲜</a></li>
+            <li><a href="javascript:;">全球购</a></li>
+            <li><a href="javascript:;">闪购</a></li>
+            <li><a href="javascript:;">团购</a></li>
+            <li><a href="javascript:;">拍卖</a></li>
+            <li><a href="javascript:;">金融</a></li>
+        </ul>
+    </div>
+</div>
+
+
+
+<div id="main" style="margin: 0 auto">
+    <div ng-view style="margin: 0 auto"></div>
+</div>
+    <ul class="slogan_ul">
+        <li class="fore1"></li>
+        <li class="fore2"></li>
+        <li class="fore3"></li>
+        <li class="fore4"></li>
+    </ul>
+</div>
+<div class="foot_last">
+    <ul class="foot_ul clearfix">
+        <li><a href="">关于我们</a>|</li>
+        <li><a href="">联系我们</a>|</li>
+        <li><a href="">联系客服</a>|</li>
+        <li><a href="">商家入驻</a>|</li>
+        <li><a href="">营销中心</a>|</li>
+        <li><a href="">手机京东</a>|</li>
+        <li><a href="">友情链接</a>|</li>
+        <li><a href="">销售联盟</a>|</li>
+        <li><a href="">京东社区</a>|</li>
+        <li><a href="">风险监测</a>|</li>
+        <li><a href="">京东公益</a>|</li>
+        <li><a href="">English Site</a>|</li>
+        <li><a href="">Contact Us</a></li>
+    </ul>
+    <div class="copyright">
+        <a href="javascript:;" class="jing">京公网安备11000002000088号</a>  |  京ICP证070359号  |  <a href="javascript:;">互联网药品信息服务资格证编号(京)-经营性-2014-0008</a>  |  新出发京零 字第大120007号<br>
+        互联网出版许可证编号新出网证(京)字150号  |  <a href="javascript:;">出版物经营许可证</a>  |  <a href="javascript:;">网络文化经营许可证京网文[2014]2148-348号</a>  |  违法和不良信息举报电话：4006561155<br>
+        Copyright ? 2004 - 2016  京东JD.com 版权所有  |  消费者维权热线：4006067733<br>
+        京东旗下网站：<a href="javascript:;">京东钱包</a>
+    </div>
+    <div class="f_icon">
+        <a href="javascript:;"><img src="images/54b8871eNa9a7067e.png" alt=""></a>
+        <a href="javascript:;"><img src="images/54b8872dNe37a9860.png" alt=""></a>
+        <a href="javascript:;"><img src="images/54b8875fNad1e0c4c.png" alt=""></a>
+        <a href="javascript:;"><img src="images/56a89b8fNfbaade9a.jpg" alt=""></a>
+        <a href="javascript:;"><img src="images/5698dc03N23f2e3b8.jpg" alt=""></a>
+        <a href="javascript:;"><img src="images/5698dc16Nb2ab99df.jpg" alt=""></a>
+    </div>
+</div>
+
+<!--导航-->
+<div class="jd_boundary"></div>
+<div class="jd_tool">
+    <ul class="jd_t">
+        <li><a href="javascript:;" class="t_fore1"></a><span>京东会员</span></li>
+        <li><a href="javascript:;" class="t_fore2"></a><span>购物车</span></li>
+        <li><a href="javascript:;" class="t_fore3"></a><span>我的关注</span></li>
+        <li><a href="javascript:;" class="t_fore4"></a><span>我的足迹</span></li>
+        <li><a href="javascript:;" class="t_fore5"></a><span>我的消息</span></li>
+        <li><a href="javascript:;" class="t_fore6"></a><span>咨询JIMI</span></li>
+    </ul>
+</div>
+<div class="jd_stick">
+    <ul class="jd_s">
+        <li><a href="#top" class="s_fore1" ></a><span>顶部</span></li>
+        <li><a href="javascript:;" class="s_fore2"></a><span>反馈</span></li>
+        <li><a href="javascript:;" class="jd_s_last">有奖调查</a></li>
+    </ul>
+</div>
+
+</body>
+</html>
