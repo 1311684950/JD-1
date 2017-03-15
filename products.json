@@ -1,0 +1,7 @@
+[
+  {"name":"Apple","price":1999,"os":"已有3600+人评价","quantity":2,"imgsrc":"pic1.jpg"},
+  {"name":"宏碁","price":3999,"os":"已有8.5万+人评价","quantity":1,"imgsrc":"pic2.jpg"},
+  {"name":"联想","price":4999,"os":"已有1500+人评价","quantity":1,"imgsrc":"pic3.jpg"},
+  {"name":"华硕","price":999,"os":"已有3.3万+人评价","quantity":3,"imgsrc":"pic4.jpg"},
+  {"name":"小米","price":2999,"os":"已有3.8万+人评价","quantity":2,"imgsrc":"pic5.jpg"}
+]

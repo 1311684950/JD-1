@@ -1,0 +1,58 @@
+<br><div class="wrop" style="width: 1210px ;margin: 0 auto">
+    <div class="shanxuan">
+        请选择您的价格范围：
+        <input type="number" ng-model="range.minPrice" style="border: 1px solid teal" >
+        <input type="number" ng-model="range.maxPrice" style="border: 1px solid teal" >
+    </div>
+    <div class="chanping" ng-repeat="product in products|filterPrice:range.minPrice:range.maxPrice" style="width: 302.5px ;float: left">
+        <div class="xinagxi" style="text-align: center">
+            <div><img ng-src="images/{{product.imgsrc}}"/></div>
+            <div style="color: red;font-size: 18px">{{product.price | currency:"￥"}}</div>
+            <div style="color: #0f0f0f;font-size: 12px">{{product.name}}</div>
+            <div style="color:teal;font-size: 12px">{{product.os | uppercase}}</div>
+            <div>{{product.date | date:"yyyy年MM月dd日 HH:mm:ss"}}</div>
+            <div>
+                <!--<button class="btn btn-link" ng-click="add(product)">购买</button>-->
+                <a href="#/detail?name={{product.name}}" style="color: #000;font-size: 14px">详情</a>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+
+
+<!--<div class="panel panel-info">-->
+    <!--<div class="panel-heading">显示商品</div>-->
+    <!--<div class="panel-body">-->
+        <!--<table class="table table-striped">-->
+            <!--<thead>-->
+            <!--<tr>-->
+                <!--<th>#</th>-->
+                <!--<th>商品名称</th>-->
+                <!--<th>商品价格</th>-->
+                <!--<th>操作系统</th>-->
+                <!--<th>出厂日期</th>-->
+                <!--<th>预览</th>-->
+                <!--<th>操作</th>-->
+            <!--</tr>-->
+            <!--</thead>-->
+            <!--<tbody>-->
+            <!--&lt;!&ndash;使用自定义过滤器:指定过滤器名称和参数. limitTo&ndash;&gt;-->
+            <!--<tr ng-repeat="product in products">-->
+                <!--<td>{{$index + 1}}</td>-->
+                <!--<td>{{product.name}}</td>-->
+                <!--<td>{{product.price | currency:"￥"}}</td>-->
+                <!--<td>{{product.os | uppercase}}</td>-->
+                <!--<td>{{product.date | date:"yyyy年MM月dd日 HH:mm:ss"}}</td>-->
+                <!--<td><img ng-src="images/{{product.imgsrc}}"/></td>-->
+                <!--<td>-->
+                    <!--&lt;!&ndash;<button class="btn btn-link" ng-click="add(product)">购买</button>&ndash;&gt;-->
+                    <!--<a href="#/detail?name={{product.name}}">详情</a>-->
+                <!--</td>-->
+            <!--</tr>-->
+            <!--</tbody>-->
+        <!--</table>-->
+    <!--</div>-->
+<!--</div>-->
